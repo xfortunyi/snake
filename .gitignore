@@ -1,0 +1,10 @@
+
+*.o
+*.out
+*.exe
+*.a
+*.so
+*.dylib
+
+build/
+.DS_Store
