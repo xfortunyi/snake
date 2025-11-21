@@ -1,0 +1,455 @@
+// types.h - Tipos de datos comunes
+#ifndef TYPES_H
+#define TYPES_H
+
+#include <stdbool.h>
+
+#define MAX_SNAKE_LENGTH 100
+
+typedef struct {
+    int x;
+    int y;
+} Point;
+
+typedef enum {
+    DIR_UP,
+    DIR_DOWN,
+    DIR_LEFT,
+    DIR_RIGHT
+} Direction;
+
+#endif
+
+// ============================================
+// snake.h - Gestión de la serpiente
+#ifndef SNAKE_H
+#define SNAKE_H
+
+#include "types.h"
+
+typedef struct {
+    Point body[MAX_SNAKE_LENGTH];
+    int length;
+    Direction dir;
+} Snake;
+
+void snake_init(Snake *snake, int start_x, int start_y);
+void snake_move(Snake *snake);
+void snake_grow(Snake *snake);
+void snake_change_direction(Snake *snake, Direction new_dir);
+bool snake_check_self_collision(const Snake *snake);
+bool snake_check_wall_collision(const Snake *snake, int max_x, int max_y);
+Point snake_get_head(const Snake *snake);
+
+#endif
+
+// ============================================
+// snake.c - Implementación de la serpiente
+#include "snake.h"
+
+void snake_init(Snake *snake, int start_x, int start_y) {
+    snake->length = 3;
+    snake->dir = DIR_RIGHT;
+    
+    for (int i = 0; i < snake->length; i++) {
+        snake->body[i].x = start_x - i;
+        snake->body[i].y = start_y;
+    }
+}
+
+void snake_move(Snake *snake) {
+    // Mover el cuerpo
+    for (int i = snake->length - 1; i > 0; i--) {
+        snake->body[i] = snake->body[i - 1];
+    }
+    
+    // Mover la cabeza según la dirección
+    switch (snake->dir) {
+        case DIR_UP:    snake->body[0].y--; break;
+        case DIR_DOWN:  snake->body[0].y++; break;
+        case DIR_LEFT:  snake->body[0].x--; break;
+        case DIR_RIGHT: snake->body[0].x++; break;
+    }
+}
+
+void snake_grow(Snake *snake) {
+    if (snake->length < MAX_SNAKE_LENGTH) {
+        snake->length++;
+    }
+}
+
+void snake_change_direction(Snake *snake, Direction new_dir) {
+    // Evitar dirección opuesta
+    if ((snake->dir == DIR_UP && new_dir == DIR_DOWN) ||
+        (snake->dir == DIR_DOWN && new_dir == DIR_UP) ||
+        (snake->dir == DIR_LEFT && new_dir == DIR_RIGHT) ||
+        (snake->dir == DIR_RIGHT && new_dir == DIR_LEFT)) {
+        return;
+    }
+    snake->dir = new_dir;
+}
+
+bool snake_check_self_collision(const Snake *snake) {
+    Point head = snake->body[0];
+    for (int i = 1; i < snake->length; i++) {
+        if (head.x == snake->body[i].x && head.y == snake->body[i].y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool snake_check_wall_collision(const Snake *snake, int max_x, int max_y) {
+    Point head = snake->body[0];
+    return (head.x <= 0 || head.x >= max_x - 1 || 
+            head.y <= 0 || head.y >= max_y - 1);
+}
+
+Point snake_get_head(const Snake *snake) {
+    return snake->body[0];
+}
+
+// ============================================
+// food.h - Gestión de la comida
+#ifndef FOOD_H
+#define FOOD_H
+
+#include "types.h"
+#include "snake.h"
+
+typedef struct {
+    Point pos;
+    bool active;
+} Food;
+
+void food_init(Food *food);
+void food_spawn(Food *food, const Snake *snake, int max_x, int max_y);
+bool food_is_eaten(const Food *food, Point head);
+void food_deactivate(Food *food);
+
+#endif
+
+// ============================================
+// food.c - Implementación de la comida
+#include "food.h"
+#include <stdlib.h>
+
+void food_init(Food *food) {
+    food->active = false;
+}
+
+void food_spawn(Food *food, const Snake *snake, int max_x, int max_y) {
+    bool valid;
+    do {
+        valid = true;
+        food->pos.x = rand() % (max_x - 2) + 1;
+        food->pos.y = rand() % (max_y - 2) + 1;
+        
+        // Verificar que no aparezca sobre la serpiente
+        for (int i = 0; i < snake->length; i++) {
+            if (snake->body[i].x == food->pos.x && 
+                snake->body[i].y == food->pos.y) {
+                valid = false;
+                break;
+            }
+        }
+    } while (!valid);
+    
+    food->active = true;
+}
+
+bool food_is_eaten(const Food *food, Point head) {
+    return food->active && 
+           food->pos.x == head.x && 
+           food->pos.y == head.y;
+}
+
+void food_deactivate(Food *food) {
+    food->active = false;
+}
+
+// ============================================
+// ui.h - Interfaz de usuario
+#ifndef UI_H
+#define UI_H
+
+#include "types.h"
+#include "snake.h"
+#include "food.h"
+
+bool ui_init(void);
+void ui_cleanup(void);
+void ui_clear(void);
+void ui_refresh(void);
+void ui_draw_border(int width, int height);
+void ui_draw_snake(const Snake *snake);
+void ui_draw_food(const Food *food);
+void ui_draw_score(int score);
+void ui_draw_game_over(int score);
+int ui_get_input(void);
+void ui_get_screen_size(int *width, int *height);
+
+#endif
+
+// ============================================
+// ui.c - Implementación de la interfaz
+#include "ui.h"
+#include <ncurses.h>
+
+#define MIN_WIDTH 20
+#define MIN_HEIGHT 10
+
+bool ui_init(void) {
+    initscr();
+    
+    // Verificar tamaño mínimo
+    if (LINES < MIN_HEIGHT || COLS < MIN_WIDTH) {
+        endwin();
+        return false;
+    }
+    
+    cbreak();
+    noecho();
+    curs_set(0);
+    keypad(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
+    
+    if (has_colors()) {
+        start_color();
+        init_pair(1, COLOR_GREEN, COLOR_BLACK);   // Cabeza
+        init_pair(2, COLOR_YELLOW, COLOR_BLACK);  // Cuerpo
+        init_pair(3, COLOR_RED, COLOR_BLACK);     // Comida
+    }
+    
+    return true;
+}
+
+void ui_cleanup(void) {
+    endwin();
+}
+
+void ui_clear(void) {
+    clear();
+}
+
+void ui_refresh(void) {
+    refresh();
+}
+
+void ui_draw_border(int width, int height) {
+    for (int i = 0; i < width; i++) {
+        mvaddch(0, i, '#');
+        mvaddch(height - 1, i, '#');
+    }
+    for (int i = 0; i < height; i++) {
+        mvaddch(i, 0, '#');
+        mvaddch(i, width - 1, '#');
+    }
+}
+
+void ui_draw_snake(const Snake *snake) {
+    attron(COLOR_PAIR(1));
+    mvaddch(snake->body[0].y, snake->body[0].x, 'O');
+    attroff(COLOR_PAIR(1));
+    
+    attron(COLOR_PAIR(2));
+    for (int i = 1; i < snake->length; i++) {
+        mvaddch(snake->body[i].y, snake->body[i].x, 'o');
+    }
+    attroff(COLOR_PAIR(2));
+}
+
+void ui_draw_food(const Food *food) {
+    if (food->active) {
+        attron(COLOR_PAIR(3));
+        mvaddch(food->pos.y, food->pos.x, '*');
+        attroff(COLOR_PAIR(3));
+    }
+}
+
+void ui_draw_score(int score) {
+    mvprintw(0, 2, " Score: %d ", score);
+}
+
+void ui_draw_game_over(int score) {
+    int height, width;
+    ui_get_screen_size(&width, &height);
+    
+    mvprintw(height/2 - 1, width/2 - 10, "GAME OVER!");
+    mvprintw(height/2, width/2 - 10, "Score: %d", score);
+    mvprintw(height/2 + 1, width/2 - 15, "Press any key to exit");
+    
+    nodelay(stdscr, FALSE);
+}
+
+int ui_get_input(void) {
+    return getch();
+}
+
+void ui_get_screen_size(int *width, int *height) {
+    *width = COLS;
+    *height = LINES;
+}
+
+// ============================================
+// game.h - Lógica del juego
+#ifndef GAME_H
+#define GAME_H
+
+#include "types.h"
+#include "snake.h"
+#include "food.h"
+
+typedef struct {
+    Snake snake;
+    Food food;
+    int score;
+    int width;
+    int height;
+    bool running;
+} Game;
+
+void game_init(Game *game);
+void game_update(Game *game);
+void game_handle_input(Game *game, int input);
+bool game_is_over(const Game *game);
+
+#endif
+
+// ============================================
+// game.c - Implementación de la lógica
+#include "game.h"
+#include "ui.h"
+
+void game_init(Game *game) {
+    ui_get_screen_size(&game->width, &game->height);
+    
+    snake_init(&game->snake, game->width / 2, game->height / 2);
+    food_init(&game->food);
+    
+    game->score = 0;
+    game->running = true;
+}
+
+void game_update(Game *game) {
+    snake_move(&game->snake);
+    
+    Point head = snake_get_head(&game->snake);
+    
+    // Verificar si come
+    if (food_is_eaten(&game->food, head)) {
+        snake_grow(&game->snake);
+        game->score += 10;
+        food_deactivate(&game->food);
+    }
+    
+    // Generar nueva comida si es necesario
+    if (!game->food.active) {
+        food_spawn(&game->food, &game->snake, game->width, game->height);
+    }
+    
+    // Verificar colisiones
+    if (snake_check_wall_collision(&game->snake, game->width, game->height) ||
+        snake_check_self_collision(&game->snake)) {
+        game->running = false;
+    }
+}
+
+void game_handle_input(Game *game, int input) {
+    switch (input) {
+        case KEY_UP:    snake_change_direction(&game->snake, DIR_UP); break;
+        case KEY_DOWN:  snake_change_direction(&game->snake, DIR_DOWN); break;
+        case KEY_LEFT:  snake_change_direction(&game->snake, DIR_LEFT); break;
+        case KEY_RIGHT: snake_change_direction(&game->snake, DIR_RIGHT); break;
+        case 'q':
+        case 'Q':
+            game->running = false;
+            break;
+    }
+}
+
+bool game_is_over(const Game *game) {
+    return !game->running;
+}
+
+// ============================================
+// main.c - Programa principal
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include "game.h"
+#include "ui.h"
+
+#define GAME_SPEED 100000 // microsegundos
+
+int main(void) {
+    srand(time(NULL));
+    
+    if (!ui_init()) {
+        printf("Error: Terminal demasiado pequeña\n");
+        printf("Tamaño mínimo: 20x10\n");
+        return 1;
+    }
+    
+    Game game;
+    game_init(&game);
+    
+    while (!game_is_over(&game)) {
+        ui_clear();
+        
+        int width, height;
+        ui_get_screen_size(&width, &height);
+        
+        ui_draw_border(width, height);
+        ui_draw_score(game.score);
+        ui_draw_food(&game.food);
+        ui_draw_snake(&game.snake);
+        
+        ui_refresh();
+        
+        int input = ui_get_input();
+        game_handle_input(&game, input);
+        
+        game_update(&game);
+        
+        usleep(GAME_SPEED);
+    }
+    
+    ui_clear();
+    ui_draw_game_over(game.score);
+    ui_refresh();
+    ui_get_input();
+    
+    ui_cleanup();
+    
+    return 0;
+}
+
+// ============================================
+// Makefile
+/*
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c99
+LDFLAGS = -lncurses
+
+SRC = main.c game.c snake.c food.c ui.c
+OBJ = $(SRC:.c=.o)
+TARGET = snake
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJ) $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
+
+.PHONY: all clean run
+*/
