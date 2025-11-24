@@ -25,7 +25,13 @@ int main() {
 
     ui_draw_border(width, height);
     ui_draw_score(game.score);
+    ui_draw_food(&game.food);
+    ui_draw_snake(&game.snake);
+
     refresh();
+
+    int input = getch();
+    game_handle_input(&game, input);
   }
 
   return 0;

@@ -1,4 +1,6 @@
 #include "ui.h"
+#include "food.h"
+#include "snake.h"
 #include <ncurses.h>
 
 #define MIN_WIDTH 20
@@ -46,3 +48,23 @@ void ui_draw_border(int width, int height) {
 };
 
 void ui_draw_score(int score) { mvprintw(0, 2, " Score: %d ", score); };
+
+void ui_draw_snake(const snake_t *snake) {
+  attron(COLOR_PAIR(1));
+  mvaddch(snake->body[0].y, snake->body[0].x, '0');
+  attroff(COLOR_PAIR(1));
+
+  attron(COLOR_PAIR(2));
+  for (int i = 1; i < snake->length; i++) {
+    mvaddch(snake->body[i].y, snake->body[i].x, 'o');
+  }
+  attroff(COLOR_PAIR(2));
+};
+
+void ui_draw_food(const food_t *food) {
+  if (food->active) {
+    attron(COLOR_PAIR(3));
+    mvaddch(food->pos.y, food->pos.x, '*');
+    attroff(COLOR_PAIR(3));
+  }
+};

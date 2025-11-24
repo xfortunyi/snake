@@ -1,10 +1,11 @@
 #pragma once
+#include "food.h"
 #include "snake.h"
 #include <stdbool.h>
 
 typedef struct Game {
   snake_t snake;
-  // FOOD
+  food_t food;
   int score;
   int width;
   int height;
@@ -12,4 +13,5 @@ typedef struct Game {
 } game_t;
 
 void game_init(game_t *game);
+void game_handle_input(game_t *game, int input);
 bool game_is_over(const game_t *game);

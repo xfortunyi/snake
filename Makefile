@@ -1,7 +1,7 @@
 
 CC = gcc
 CFLAGS = -I include -Wall -g
-SRC = src/main.c src/ui.c src/game.c
+SRC = src/main.c src/ui.c src/game.c src/snake.c src/food.c
 LDFLAGS = -lncurses
 OBJ = $(SRC:.c=.o)
 TARGET = snake
