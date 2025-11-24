@@ -1,9 +1,9 @@
 #pragma once
-
+#include "snake.h"
 #include <stdbool.h>
 
 typedef struct Game {
-  // SNAKE
+  snake_t snake;
   // FOOD
   int score;
   int width;

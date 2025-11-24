@@ -44,3 +44,5 @@ void ui_draw_border(int width, int height) {
     mvaddch(i, width - 1, '#');
   }
 };
+
+void ui_draw_score(int score) { mvprintw(0, 2, " Score: %d ", score); };

@@ -24,6 +24,7 @@ int main() {
     ui_get_screen_size(&width, &height);
 
     ui_draw_border(width, height);
+    ui_draw_score(game.score);
     refresh();
   }
 
