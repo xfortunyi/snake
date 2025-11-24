@@ -14,4 +14,5 @@ typedef struct Game {
 
 void game_init(game_t *game);
 void game_handle_input(game_t *game, int input);
+void game_update(game_t *game);
 bool game_is_over(const game_t *game);

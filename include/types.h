@@ -1,6 +1,7 @@
 #pragma once
 
 #define MAX_SNAKE_LENGTH 100
+#define GAME_SPEED 100000
 
 typedef struct Point {
   int x;

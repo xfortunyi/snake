@@ -32,6 +32,7 @@ int main() {
 
     int input = getch();
     game_handle_input(&game, input);
+    game_update(&game);
   }
 
   return 0;
