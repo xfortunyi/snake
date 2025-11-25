@@ -1,4 +1,5 @@
 #include "game.h"
+#include "food.h"
 #include "snake.h"
 #include "types.h"
 #include "ui.h"
@@ -36,6 +37,21 @@ void game_handle_input(game_t *game, int input) {
   }
 };
 
-void game_update(game_t *game) { snake_move(&game->snake); };
+void game_update(game_t *game) {
+  snake_move(&game->snake);
+
+  point_t head = snake_get_head(&game->snake);
+
+  // Check if eats
+  if (food_is_eaten(&game->food, head)) {
+    snake_grow(&game->snake);
+    game->score += 10;
+    food_deactivate(&game->food);
+  }
+
+  if (!game->food.active) {
+    food_spawn(&game->food, &game->snake, game->width, game->height);
+  }
+};
 
 bool game_is_over(const game_t *game) { return !game->running; }

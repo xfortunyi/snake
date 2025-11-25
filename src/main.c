@@ -1,9 +1,11 @@
 #include "game.h"
+#include "types.h"
 #include "ui.h"
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 int main() {
   srand(time(NULL));
@@ -33,7 +35,16 @@ int main() {
     int input = getch();
     game_handle_input(&game, input);
     game_update(&game);
+
+    usleep(GAME_SPEED);
   }
+
+  clear();
+  // draw game over
+  refresh();
+  getch();
+
+  endwin();
 
   return 0;
 }
