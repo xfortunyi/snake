@@ -1,8 +1,9 @@
 
 CC = gcc
-CFLAGS = -I include -Wall -g
-SRC = src/main.c src/ui.c src/game.c src/snake.c src/food.c
+CFLAGS = -I include -Wall -Wextra -g -std=c99
 LDFLAGS = -lncurses
+
+SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
 TARGET = snake
 
@@ -14,6 +15,6 @@ $(TARGET): $(OBJ)
 clean:
 	rm -f $(OBJ) $(TARGET)
 
-run:
+run: $(TARGET)
 	./$(TARGET)
 
