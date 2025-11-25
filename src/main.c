@@ -40,7 +40,7 @@ int main() {
   }
 
   clear();
-  // draw game over
+  ui_draw_game_over(game.score);
   refresh();
   getch();
 

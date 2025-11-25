@@ -52,6 +52,11 @@ void game_update(game_t *game) {
   if (!game->food.active) {
     food_spawn(&game->food, &game->snake, game->width, game->height);
   }
+
+  if (snake_check_self_collision(&game->snake) ||
+      snake_check_wall_collision(&game->snake, game->width, game->height)) {
+    game->running = false;
+  }
 };
 
 bool game_is_over(const game_t *game) { return !game->running; }

@@ -1,5 +1,6 @@
 #include "snake.h"
 #include "types.h"
+#include <stdbool.h>
 
 void snake_init(snake_t *snake, int start_x, int start_y) {
   snake->length = 3;
@@ -51,3 +52,23 @@ void snake_change_direction(snake_t *snake, direction_t new_dir) {
 };
 
 point_t snake_get_head(const snake_t *snake) { return snake->body[0]; }
+
+bool snake_check_wall_collision(const snake_t *snake, int max_x, int max_y) {
+
+  point_t head = snake->body[0];
+
+  return (head.x <= 0 || head.x >= max_x - 1 || head.y <= 0 ||
+          head.y >= max_y - 1);
+};
+
+bool snake_check_self_collision(const snake_t *snake) {
+
+  point_t head = snake->body[0];
+
+  for (int i = 1; i < snake->length; i++) {
+    if (head.x == snake->body[i].x && head.y == snake->body[i].y) {
+      return true;
+    }
+  }
+  return false;
+};

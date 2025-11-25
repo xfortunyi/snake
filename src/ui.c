@@ -68,3 +68,14 @@ void ui_draw_food(const food_t *food) {
     attroff(COLOR_PAIR(3));
   }
 };
+
+void ui_draw_game_over(int score) {
+  int height, width;
+  ui_get_screen_size(&width, &height);
+
+  mvprintw(height / 2 - 1, width / 2 - 10, "GAME OVER");
+  mvprintw(height / 2, width / 2 - 10, "Score: %d", score);
+  mvprintw(height / 2 + 1, width / 2 - 15, "Press any key to exit");
+
+  nodelay(stdscr, FALSE);
+};
